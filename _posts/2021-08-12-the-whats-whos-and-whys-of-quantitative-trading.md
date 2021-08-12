@@ -4,8 +4,10 @@ description: 量化交易是什么，谁参与量化交易，为什么要量化�
 author: 王一刀
 layout: post
 toc: true
-categories: [markdown]
+categories: [量化交易]
 ---
+
+![](https://img2.doubanio.com/view/subject/l/public/s29616842.jpg)
 
 ## 什么是量化交易
 
