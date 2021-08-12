@@ -7,7 +7,7 @@ toc: true
 categories: [量化交易]
 ---
 
-![](https://img2.doubanio.com/view/subject/l/public/s29616842.jpg)
+![]({{ site.baseurl }}/images/s29616842.jpg "量化交易封面")
 
 ## 什么是量化交易
 
