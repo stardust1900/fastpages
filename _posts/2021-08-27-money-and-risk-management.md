@@ -1,5 +1,5 @@
 ---
-title: 资金和风险管理
+title: CH6-资金和风险管理
 description: Money and Risk Management
 author: 王一刀
 layout: post
