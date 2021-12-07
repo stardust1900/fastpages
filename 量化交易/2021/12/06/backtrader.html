@@ -96,7 +96,7 @@ window.onload = wrap_img;
        • <span class="read-time" title="Estimated read time">
     
     
-      4 min read
+      1 min read
     
 </span></p>
 
@@ -133,14 +133,74 @@ window.onload = wrap_img;
 <span class="kn">import</span> <span class="nn">backtrader</span> <span class="k">as</span> <span class="nn">bt</span>
 
 <span class="k">class</span> <span class="nc">TestStrategy</span><span class="p">(</span><span class="n">bt</span><span class="o">.</span><span class="n">Strategy</span><span class="p">):</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">(</span><span class="s1">&#39;maperiod&#39;</span><span class="p">,</span> <span class="mi">15</span><span class="p">),</span>
+    <span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">txt</span><span class="p">,</span> <span class="n">dt</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="n">dt</span> <span class="o">=</span> <span class="n">dt</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">datas</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
         <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">, </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">dt</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span> <span class="n">txt</span><span class="p">))</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dataclose</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">datas</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">close</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;buflen </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataclose</span><span class="o">.</span><span class="n">buflen</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buyprice</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">buycomm</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Add a MovingAverageSimple indicator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sma</span> <span class="o">=</span> <span class="n">bt</span><span class="o">.</span><span class="n">indicators</span><span class="o">.</span><span class="n">SimpleMovingAverage</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">datas</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">period</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">params</span><span class="o">.</span><span class="n">maperiod</span><span class="p">)</span>
+        
+        <span class="c1"># Indicators for the plotting show</span>
+        <span class="n">bt</span><span class="o">.</span><span class="n">indicators</span><span class="o">.</span><span class="n">ExponentialMovingAverage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datas</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">period</span><span class="o">=</span><span class="mi">25</span><span class="p">)</span>
+        <span class="n">bt</span><span class="o">.</span><span class="n">indicators</span><span class="o">.</span><span class="n">WeightedMovingAverage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datas</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">period</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span>
+                                            <span class="n">subplot</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">bt</span><span class="o">.</span><span class="n">indicators</span><span class="o">.</span><span class="n">StochasticSlow</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datas</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">bt</span><span class="o">.</span><span class="n">indicators</span><span class="o">.</span><span class="n">MACDHisto</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datas</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">rsi</span> <span class="o">=</span> <span class="n">bt</span><span class="o">.</span><span class="n">indicators</span><span class="o">.</span><span class="n">RSI</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datas</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">bt</span><span class="o">.</span><span class="n">indicators</span><span class="o">.</span><span class="n">SmoothedMovingAverage</span><span class="p">(</span><span class="n">rsi</span><span class="p">,</span> <span class="n">period</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+        <span class="n">bt</span><span class="o">.</span><span class="n">indicators</span><span class="o">.</span><span class="n">ATR</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">datas</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">plot</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">notify_order</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">order</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">[</span><span class="n">order</span><span class="o">.</span><span class="n">Submitted</span><span class="p">,</span> <span class="n">order</span><span class="o">.</span><span class="n">Accepted</span><span class="p">]:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">[</span><span class="n">order</span><span class="o">.</span><span class="n">Completed</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">isbuy</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;BUY EXECUTED, Price: </span><span class="si">%.2f</span><span class="s1">, Cost: </span><span class="si">%.2f</span><span class="s1">, Comm </span><span class="si">%.2f</span><span class="s1">&#39;</span> <span class="o">%</span>
+                        <span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">executed</span><span class="o">.</span><span class="n">price</span><span class="p">,</span>
+                        <span class="n">order</span><span class="o">.</span><span class="n">executed</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                        <span class="n">order</span><span class="o">.</span><span class="n">executed</span><span class="o">.</span><span class="n">comm</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">buyprice</span> <span class="o">=</span> <span class="n">order</span><span class="o">.</span><span class="n">executed</span><span class="o">.</span><span class="n">price</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">buycomm</span> <span class="o">=</span> <span class="n">order</span><span class="o">.</span><span class="n">executed</span><span class="o">.</span><span class="n">comm</span>
+            <span class="k">elif</span> <span class="n">order</span><span class="o">.</span><span class="n">issell</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;SELL EXECUTED, Price: </span><span class="si">%.2f</span><span class="s1">, Cost: </span><span class="si">%.2f</span><span class="s1">, Comm </span><span class="si">%.2f</span><span class="s1">&#39;</span> <span class="o">%</span>
+                         <span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">executed</span><span class="o">.</span><span class="n">price</span><span class="p">,</span>
+                          <span class="n">order</span><span class="o">.</span><span class="n">executed</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                          <span class="n">order</span><span class="o">.</span><span class="n">executed</span><span class="o">.</span><span class="n">comm</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bar_executed</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">order</span><span class="o">.</span><span class="n">status</span> <span class="ow">in</span> <span class="p">[</span><span class="n">order</span><span class="o">.</span><span class="n">Canceled</span><span class="p">,</span> <span class="n">order</span><span class="o">.</span><span class="n">Margin</span><span class="p">,</span> <span class="n">order</span><span class="o">.</span><span class="n">Rejected</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;Order Canceled/Margin/Rejected&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">notify_trade</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trade</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">trade</span><span class="o">.</span><span class="n">isclosed</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;OPERATION PROFIT, GROSS </span><span class="si">%.2f</span><span class="s1">, NET </span><span class="si">%.2f</span><span class="s1">&#39;</span> <span class="o">%</span>
+                 <span class="p">(</span><span class="n">trade</span><span class="o">.</span><span class="n">pnl</span><span class="p">,</span> <span class="n">trade</span><span class="o">.</span><span class="n">pnlcomm</span><span class="p">))</span>
 
     <span class="k">def</span> <span class="nf">next</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;Close, </span><span class="si">%.2f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataclose</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">order</span><span class="p">:</span>
+            <span class="k">return</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">position</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataclose</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">sma</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;BUY CREATE, </span><span class="si">%.2f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataclose</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">buy</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataclose</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">sma</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="s1">&#39;SELL CREATE, </span><span class="si">%.2f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataclose</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">order</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sell</span><span class="p">()</span>
 
 
 <span class="n">cerebro</span> <span class="o">=</span> <span class="n">bt</span><span class="o">.</span><span class="n">Cerebro</span><span class="p">()</span>
@@ -160,283 +220,18 @@ window.onload = wrap_img;
 <span class="n">cerebro</span><span class="o">.</span><span class="n">adddata</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
 
 <span class="n">cerebro</span><span class="o">.</span><span class="n">broker</span><span class="o">.</span><span class="n">setcash</span><span class="p">(</span><span class="mf">100000.0</span><span class="p">)</span>
+<span class="n">cerebro</span><span class="o">.</span><span class="n">addsizer</span><span class="p">(</span><span class="n">bt</span><span class="o">.</span><span class="n">sizers</span><span class="o">.</span><span class="n">FixedSize</span><span class="p">,</span> <span class="n">stake</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">cerebro</span><span class="o">.</span><span class="n">broker</span><span class="o">.</span><span class="n">setcommission</span><span class="p">(</span><span class="n">commission</span><span class="o">=</span><span class="mf">0.001</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;组合初始值: </span><span class="si">%.2f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">cerebro</span><span class="o">.</span><span class="n">broker</span><span class="o">.</span><span class="n">getvalue</span><span class="p">())</span>
 
 <span class="n">cerebro</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;组合终结值: </span><span class="si">%.2f</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">cerebro</span><span class="o">.</span><span class="n">broker</span><span class="o">.</span><span class="n">getvalue</span><span class="p">())</span>
+<span class="c1"># cerebro.plot()</span>
 </pre></div>
 
     </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-<div class="output_area">
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>&lt;backtrader.feeds.yahoo.YahooFinanceCSVData object at 0x114ef8e80&gt;
-组合初始值: 100000.00
-2000-01-03, Close, 26.27
-2000-01-04, Close, 23.95
-2000-01-05, Close, 22.68
-2000-01-06, Close, 21.35
-2000-01-07, Close, 22.99
-2000-01-10, Close, 25.74
-2000-01-11, Close, 24.99
-2000-01-12, Close, 23.49
-2000-01-13, Close, 23.36
-2000-01-14, Close, 23.75
-2000-01-18, Close, 24.74
-2000-01-19, Close, 25.41
-2000-01-20, Close, 26.35
-2000-01-21, Close, 26.55
-2000-01-24, Close, 24.10
-2000-01-25, Close, 25.10
-2000-01-26, Close, 24.49
-2000-01-27, Close, 23.04
-2000-01-28, Close, 21.07
-2000-01-31, Close, 22.22
-2000-02-01, Close, 24.02
-2000-02-02, Close, 24.16
-2000-02-03, Close, 25.21
-2000-02-04, Close, 25.71
-2000-02-07, Close, 26.66
-2000-02-08, Close, 26.49
-2000-02-09, Close, 26.66
-2000-02-10, Close, 27.71
-2000-02-11, Close, 26.55
-2000-02-14, Close, 27.66
-2000-02-15, Close, 27.30
-2000-02-16, Close, 27.24
-2000-02-17, Close, 27.41
-2000-02-18, Close, 26.05
-2000-02-22, Close, 26.38
-2000-02-23, Close, 28.05
-2000-02-24, Close, 27.55
-2000-02-25, Close, 31.41
-2000-02-28, Close, 30.52
-2000-02-29, Close, 33.02
-2000-03-01, Close, 31.80
-2000-03-02, Close, 30.47
-2000-03-03, Close, 33.36
-2000-03-06, Close, 33.69
-2000-03-07, Close, 33.33
-2000-03-08, Close, 36.97
-2000-03-09, Close, 37.36
-2000-03-10, Close, 36.30
-2000-03-13, Close, 35.02
-2000-03-14, Close, 34.25
-2000-03-15, Close, 34.97
-2000-03-16, Close, 36.44
-2000-03-17, Close, 35.50
-2000-03-20, Close, 34.75
-2000-03-21, Close, 35.89
-2000-03-22, Close, 37.39
-2000-03-23, Close, 38.64
-2000-03-24, Close, 38.69
-2000-03-27, Close, 39.33
-2000-03-28, Close, 38.50
-2000-03-29, Close, 36.69
-2000-03-30, Close, 34.88
-2000-03-31, Close, 34.72
-2000-04-03, Close, 34.19
-2000-04-04, Close, 33.77
-2000-04-05, Close, 34.80
-2000-04-06, Close, 36.55
-2000-04-07, Close, 38.75
-2000-04-10, Close, 36.69
-2000-04-11, Close, 34.41
-2000-04-12, Close, 32.52
-2000-04-13, Close, 31.99
-2000-04-14, Close, 27.80
-2000-04-17, Close, 33.27
-2000-04-18, Close, 35.11
-2000-04-19, Close, 33.16
-2000-04-20, Close, 31.49
-2000-04-24, Close, 32.22
-2000-04-25, Close, 33.61
-2000-04-26, Close, 32.11
-2000-04-27, Close, 34.38
-2000-04-28, Close, 35.55
-2000-05-01, Close, 35.44
-2000-05-02, Close, 34.61
-2000-05-03, Close, 33.72
-2000-05-04, Close, 33.02
-2000-05-05, Close, 34.16
-2000-05-08, Close, 32.16
-2000-05-09, Close, 32.02
-2000-05-10, Close, 30.08
-2000-05-11, Close, 32.19
-2000-05-12, Close, 32.99
-2000-05-15, Close, 34.25
-2000-05-16, Close, 35.22
-2000-05-17, Close, 34.77
-2000-05-18, Close, 32.49
-2000-05-19, Close, 31.16
-2000-05-22, Close, 30.16
-2000-05-23, Close, 27.85
-2000-05-24, Close, 28.57
-2000-05-25, Close, 29.55
-2000-05-26, Close, 29.80
-2000-05-30, Close, 32.99
-2000-05-31, Close, 31.97
-2000-06-01, Close, 34.63
-2000-06-02, Close, 35.66
-2000-06-05, Close, 36.00
-2000-06-06, Close, 34.27
-2000-06-07, Close, 35.58
-2000-06-08, Close, 36.64
-2000-06-09, Close, 36.77
-2000-06-12, Close, 35.83
-2000-06-13, Close, 36.33
-2000-06-14, Close, 35.13
-2000-06-15, Close, 36.69
-2000-06-16, Close, 36.41
-2000-06-19, Close, 38.25
-2000-06-20, Close, 38.27
-2000-06-21, Close, 38.33
-2000-06-22, Close, 36.25
-2000-06-23, Close, 35.36
-2000-06-26, Close, 36.77
-2000-06-27, Close, 36.58
-2000-06-28, Close, 36.89
-2000-06-29, Close, 35.97
-2000-06-30, Close, 37.39
-2000-07-03, Close, 35.66
-2000-07-05, Close, 32.16
-2000-07-06, Close, 33.63
-2000-07-07, Close, 33.75
-2000-07-10, Close, 32.97
-2000-07-11, Close, 32.16
-2000-07-12, Close, 33.22
-2000-07-13, Close, 33.69
-2000-07-14, Close, 33.86
-2000-07-17, Close, 33.86
-2000-07-18, Close, 32.99
-2000-07-19, Close, 32.80
-2000-07-20, Close, 34.75
-2000-07-21, Close, 33.55
-2000-07-24, Close, 33.36
-2000-07-25, Close, 33.80
-2000-07-26, Close, 34.13
-2000-07-27, Close, 33.38
-2000-07-28, Close, 32.19
-2000-07-31, Close, 33.44
-2000-08-01, Close, 32.52
-2000-08-02, Close, 32.52
-2000-08-03, Close, 34.44
-2000-08-04, Close, 36.27
-2000-08-07, Close, 36.41
-2000-08-08, Close, 36.91
-2000-08-09, Close, 36.19
-2000-08-10, Close, 35.61
-2000-08-11, Close, 36.08
-2000-08-14, Close, 36.64
-2000-08-15, Close, 36.14
-2000-08-16, Close, 36.11
-2000-08-17, Close, 37.33
-2000-08-18, Close, 36.16
-2000-08-21, Close, 37.00
-2000-08-22, Close, 37.16
-2000-08-23, Close, 36.86
-2000-08-24, Close, 37.66
-2000-08-25, Close, 37.64
-2000-08-28, Close, 38.58
-2000-08-29, Close, 39.03
-2000-08-30, Close, 39.25
-2000-08-31, Close, 40.44
-2000-09-01, Close, 41.19
-2000-09-05, Close, 40.50
-2000-09-06, Close, 39.69
-2000-09-07, Close, 40.56
-2000-09-08, Close, 38.50
-2000-09-11, Close, 37.11
-2000-09-12, Close, 35.30
-2000-09-13, Close, 36.39
-2000-09-14, Close, 37.78
-2000-09-15, Close, 34.83
-2000-09-18, Close, 34.01
-2000-09-19, Close, 35.27
-2000-09-20, Close, 35.55
-2000-09-21, Close, 35.11
-2000-09-22, Close, 35.91
-2000-09-25, Close, 35.02
-2000-09-26, Close, 35.33
-2000-09-27, Close, 35.52
-2000-09-28, Close, 36.24
-2000-09-29, Close, 35.02
-2000-10-02, Close, 35.02
-2000-10-03, Close, 30.91
-2000-10-04, Close, 30.30
-2000-10-05, Close, 30.38
-2000-10-06, Close, 30.08
-2000-10-09, Close, 29.69
-2000-10-10, Close, 28.74
-2000-10-11, Close, 27.69
-2000-10-12, Close, 28.02
-2000-10-13, Close, 31.69
-2000-10-16, Close, 30.74
-2000-10-17, Close, 29.96
-2000-10-18, Close, 29.85
-2000-10-19, Close, 32.36
-2000-10-20, Close, 31.35
-2000-10-23, Close, 30.30
-2000-10-24, Close, 31.85
-2000-10-25, Close, 30.58
-2000-10-26, Close, 30.30
-2000-10-27, Close, 30.41
-2000-10-30, Close, 28.13
-2000-10-31, Close, 29.35
-2000-11-01, Close, 27.91
-2000-11-02, Close, 26.30
-2000-11-03, Close, 26.96
-2000-11-06, Close, 24.85
-2000-11-07, Close, 23.63
-2000-11-08, Close, 22.07
-2000-11-09, Close, 24.18
-2000-11-10, Close, 22.63
-2000-11-13, Close, 22.01
-2000-11-14, Close, 25.24
-2000-11-15, Close, 25.68
-2000-11-16, Close, 24.35
-2000-11-17, Close, 25.63
-2000-11-20, Close, 22.01
-2000-11-21, Close, 21.24
-2000-11-22, Close, 19.85
-2000-11-24, Close, 21.46
-2000-11-27, Close, 20.57
-2000-11-28, Close, 20.15
-2000-11-29, Close, 20.35
-2000-11-30, Close, 23.57
-2000-12-01, Close, 23.52
-2000-12-04, Close, 25.07
-2000-12-05, Close, 28.02
-2000-12-06, Close, 26.85
-2000-12-07, Close, 25.18
-2000-12-08, Close, 26.74
-2000-12-11, Close, 28.41
-2000-12-12, Close, 27.35
-2000-12-13, Close, 25.24
-2000-12-14, Close, 24.46
-2000-12-15, Close, 25.41
-2000-12-18, Close, 28.46
-2000-12-19, Close, 27.24
-2000-12-20, Close, 25.35
-2000-12-21, Close, 26.24
-2000-12-22, Close, 28.35
-2000-12-26, Close, 27.52
-2000-12-27, Close, 27.30
-2000-12-28, Close, 27.63
-2000-12-29, Close, 25.85
-组合终结值: 100000.00
-</pre>
-</div>
-</div>
-
 </div>
 </div>
 
